@@ -1,0 +1,35 @@
+<settings>
+<profiles>
+  <profile>
+    <ids>
+    <id>kyc-ob-m2-domain-kyc-m2-repo</id>
+    <id>kyc-ob-m2-domain-kyc-user-validator-repo</id>
+    </ids>
+    <activation>
+      <activeByDefault>true</activeByDefault>
+    </activation>
+    <repositories>
+      <repository>
+        <id>kyc-ob-m2-domain-kyc-m2-repo</id>
+        <url>https://kyc-ob-m2-domain-524540894843.d.codeartifact.eu-west-1.amazonaws.com/maven/kyc-m2-repo/</url>
+      </repository>
+      <repository>
+        <id>kyc-ob-m2-domain-kyc-user-validator-repo</id>
+        <url>https://kyc-ob-m2-domain-524540894843.d.codeartifact.eu-west-1.amazonaws.com/maven/kyc-user-validator-repo/</url>
+      </repository>
+    </repositories>
+  </profile>
+</profiles>
+<servers>
+  <server>
+    <id>kyc-ob-m2-domain-kyc-m2-repo</id>
+    <username>aws</username>
+    <password>${env.CODEARTIFACT_AUTH_TOKEN}</password>
+  </server>
+  <server>
+    <id>kyc-ob-m2-domain-kyc-user-validator-repo</id>
+    <username>aws</username>
+    <password>${env.CODEARTIFACT_AUTH_TOKEN}</password>
+  </server>
+</servers>
+</settings>

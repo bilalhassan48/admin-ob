@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property  resource="application.properties" />
+    <logger name="com.digitify" level="#logback.loglevel#"/>
+    <logger name="javax.management.remote.rmi" level="WARN"/>
+    <logger name="javax.activation" level="WARN"/>
+    <logger name="javax.mail" level="WARN"/>
+    <logger name="javax.xml.bind" level="WARN"/>
+    <logger name="ch.qos.logback" level="WARN"/>
+    <logger name="com.codahale.metrics" level="WARN"/>
+    <logger name="com.ryantenney" level="WARN"/>
+    <logger name="com.sun" level="WARN"/>
+    <logger name="com.zaxxer" level="WARN"/>
+    <logger name="io.undertow" level="WARN"/>
+    <logger name="io.undertow.websockets.jsr" level="ERROR"/>
+    <logger name="org.apache" level="WARN"/>
+    <logger name="org.apache.catalina.startup.DigesterFactory" level="OFF"/>
+    <logger name="org.bson" level="WARN"/>
+    <logger name="org.hibernate.validator" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hibernate.ejb.HibernatePersistence" level="OFF"/>
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.web" level="WARN"/>
+    <logger name="org.springframework.security" level="WARN"/>
+    <logger name="org.springframework.cache" level="WARN"/>
+    <logger name="org.thymeleaf" level="WARN"/>
+    <logger name="org.xnio" level="WARN"/>
+    <logger name="springfox" level="WARN"/>
+    <logger name="sun.rmi" level="WARN"/>
+    <logger name="liquibase" level="INFO"/>
+    <logger name="LiquibaseSchemaResolver" level="INFO"/>
+    <logger name="sun.rmi.transport" level="WARN"/>
+    <logger name="com.amazonaws.xray.strategy.LogErrorContextMissingStrategy" level="OFF"/>
+    <logger name="com.amazonaws.xray.strategy.sampling.pollers.RulePoller" level="OFF"/>
+
+    <if condition='property("LOCAL_ENABLED").contains("true")'>
+        <then>
+            <appender name="Console"
+                      class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <pattern>
+                        %black(%d{yy-MM-dd E HH:mm:ss.SSS}) %highlight(%red(%-5level)) --- %boldYellow([%X{traceId}/%X{spanId}]) %boldCyan([%8.15t]){cyan} %highlight(%blue(%-40.40logger{0})) : %black(%m){faint}%n
+                    </pattern>
+                </encoder>
+            </appender>
+            <!-- Send logs to Console -->
+            <!-- LOG everything at INFO level -->
+            <root level="info">
+                <appender-ref ref="Console" />
+            </root>
+
+            <!-- LOG at TRACE level -->
+            <logger name="com.digitify" level="trace" additivity="false">
+                <appender-ref ref="Console" />
+            </logger>
+        </then>
+        <else>
+            <appender name="Kinesis"
+                      class="com.gu.logback.appender.kinesis.KinesisAppender">
+                <bufferSize>1000</bufferSize>
+                <threadCount>20</threadCount>
+                <region>${AWS_REGION}</region>
+                <maxRetries>10</maxRetries>
+                <shutdownTimeout>30</shutdownTimeout>
+                <streamName>${KINESIS_STREAM}</streamName>
+                <encoding>UTF-8</encoding>
+
+                <layout class="net.logstash.logback.layout.LoggingEventCompositeJsonLayout">
+                    <lineSeparator>UNIX</lineSeparator>
+                    <providers>
+                        <mdc/>
+                        <pattern>
+                            <pattern>
+                                {
+                                "message": "%d{yy-MM-dd E HH:mm:ss.SSS} %-5level -&#45;&#45; [%X{traceId}/%X{spanId}] %8.15t %-30.40logger{0} : %m%n",
+                                "server-timestamp": "%d{yy-MM-dd E HH:mm:ss.SSS}",
+                                "@timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}",
+                                "thread": "%thread",
+                                "level": "%level",
+                                "logger": "%logger",
+                                "environment": "${ENV}",
+                                "service":"${spring.application.name}"
+                                }
+                            </pattern>
+                        </pattern>
+                        <stackTrace>
+                            <fieldName>stacktrace</fieldName>
+                            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                                <maxDepthPerThrowable>20</maxDepthPerThrowable>
+                                <maxLength>1024</maxLength>
+                                <shortenedClassNameLength>20</shortenedClassNameLength>
+                                <exclude>^sun\.reflect\..*\.invoke</exclude>
+                                <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                            </throwableConverter>
+                        </stackTrace>
+                        <stackTrace>
+                            <fieldName>exception</fieldName>
+                        </stackTrace>
+                    </providers>
+                </layout>
+            </appender>
+
+            <!-- Send logs to AWS Kinesis -->
+            <!-- LOG everything at INFO level -->
+            <root level="info">
+                <appender-ref ref="Kinesis" />
+            </root>
+
+            <!-- LOG at TRACE level -->
+            <logger name="com.digitify" level="trace" additivity="false">
+                <appender-ref ref="Kinesis" />
+            </logger>
+        </else>
+    </if>
+
+</configuration>
